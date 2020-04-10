@@ -1,0 +1,29 @@
+{
+  "name": "lambda-media-generation",
+  "description": "Lambda function for creating resized images in S3.",
+  "main": "index.js",
+  "author": {
+    "name": "ndevr"
+  },
+  "version": "0.0.1",
+  "private": true,
+  "devDependencies": {
+    "aws-sdk": "^2.437.0",
+    "aws-sdk-mock": "^4.4.0",
+    "mocha": "^6.1.4",
+    "nyc": "^14.0.0",
+    "sinon": "^7.3.2"
+  },
+  "scripts": {
+    "pretest": "yarn run build:init && yarn install",
+    "test": "nyc --reporter=html --reporter=text mocha",
+    "build:init": "rm -rf package-lock.json && rm -rf node_modules && rm -rf .aws-sam",
+    "build": "npm run build:init && npm install --arch=x64 --platform=linux && sam build && cd .aws-sam/build/ImageHandlerFunction && rm -rf node_modules/sharp && npm install --arch=x64 --platform=linux sharp",
+    "check": "npm run build && sam local invoke \"ImageHandlerFunction\" -e events/event.json"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "async": "^3.2.0",
+    "sharp": "^0.25.2"
+  }
+}
