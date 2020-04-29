@@ -11,10 +11,20 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const ImageHandler = require('./image-handler.js');
+const Generate = require('./generate.js');
 
 exports.handler = async (event) => {
-    const imageHandler = new ImageHandler();
 
-    await imageHandler.process(event);
+    // console.log(event);
+    let response;
+    if (event.httpMethod == 'POST') {
+        if (event.path = '/generate') {
+            const generate = new Generate();
+
+            response = await generate.process(event);
+        }
+    } else {
+        response = "Invalid request."
+    }
+    return response;
 };

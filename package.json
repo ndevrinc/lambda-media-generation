@@ -18,8 +18,8 @@
     "pretest": "yarn run build:init && yarn install",
     "test": "nyc --reporter=html --reporter=text mocha",
     "build:init": "rm -rf package-lock.json && rm -rf node_modules && rm -rf .aws-sam",
-    "build": "npm run build:init && npm install --arch=x64 --platform=linux && sam build && cd .aws-sam/build/ImageHandlerFunction && rm -rf node_modules/sharp && npm install --arch=x64 --platform=linux sharp",
-    "check": "npm run build && sam local invoke \"ImageHandlerFunction\" -e events/event.json"
+    "build": "npm run build:init && npm install --arch=x64 --platform=linux && sam build && cd .aws-sam/build/GenerateFunction && rm -rf node_modules/sharp && npm install --arch=x64 --platform=linux sharp",
+    "check": "npm run build && sam local invoke \"GenerateFunction\" -e events/event.json"
   },
   "license": "Apache-2.0",
   "dependencies": {

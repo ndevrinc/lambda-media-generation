@@ -10,10 +10,17 @@ Globals:
     Timeout: 10
 
 Resources:
-  ImageHandlerFunction:
+  GenerateFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./
       Handler: index.handler
+      Timeout: 600
       Runtime: nodejs12.x
       Role: arn:aws:iam::798648301236:role/lambda-s3-role
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /generate
+            Method: POST
