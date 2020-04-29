@@ -129,6 +129,7 @@ class Generate {
         this.update_key = "";
 
         let body = JSON.parse(event.body);
+        let api_key = body.api_key;
         this.bucket = body.bucket;
         this.aid = body.aid;
         // Object key may have spaces or unicode non-ASCII characters.
@@ -137,6 +138,13 @@ class Generate {
 
         if ("object" === typeof config.buckets) {
             try {
+                // Check API Key
+                if (api_key !== confi.buckets[this.bucket]['api_key']) {
+                    console.log("api_key did not match!");
+                    this.mainSize = false;
+                    return;
+                }
+
                 this.sources = config.buckets[this.bucket]['sources'];
                 this.setMainSize();
                 this.sizes = config.buckets[this.bucket]['sources'][this.mainSize];
