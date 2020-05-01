@@ -1,0 +1,29 @@
+{
+  "buckets": {
+    "cmsphilly-ndevr-io": {
+      "hostname": "cmsphilly-ndevr.pantheonsite.io",
+      "path": "/wp-json/omg/v1/attachments",
+      "update_key": "changemelater",
+      "sources": {
+        "full": [
+          [2880,1800,true],
+          [2048,2048,false],
+          [1536,1536,false],
+          [1280,720,true],
+          [1080,9999,false],
+          [1080,675,true],
+          [1024,1024,false],
+          [980,551,true],
+          [768,0,false],
+          [510,382,true],
+          [480,270,true],
+          [400,516,true],
+          [400,284,true],
+          [400,250,true],
+          [300,300,false],
+          [150,150,true]
+        ]
+      }
+    }
+  }
+}

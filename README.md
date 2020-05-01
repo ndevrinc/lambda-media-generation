@@ -1,5 +1,5 @@
-#Autosync S3 Bucket
-A solution to automatically 'backup' created objects in one bucket to one or more other buckets.
+#Media Generation
+Lambda function for creating resized images in S3.
 
 Dependencies
 ============
@@ -12,7 +12,7 @@ Installation
 ============
 * Clone the repository, then make the desired code changes
 ```bash
-git clone https://github.com/ndevrinc/autosync-s3-bucket.git
+git clone https://github.com/ndevrinc/lambda-media-generation.git
 ```
 
 * Copy example files, make desired changes
@@ -38,31 +38,16 @@ aws s3 mb s3://test-bucket-source1 --region us-east-1
 ```
 > Note: You must have the AWS CLI installed.
 
-* Using SAM, build
+* Using SAM, build (this isn't working at the moment, just use yarn run build)
 ```bash
 sam build
 ```
 > Note: You must have SAM installed.
 
-* Using SAM, execute lambda function locally
-```bash
-sam local invoke -e events/event.json
-```
-> Note: You must have Docker installed and running.
-
 * Using SAM, deploy to Amazon
 ```bash
 sam deploy --guided
 ```
-
-* Add an Event Notification to the primary S3 Bucket
-  * Under Properties > Events
-  * Click "Add notification"
-  * Name the envent something like "Autosync Bucket" would be good
-  * Select "All object create events"
-  * In "Send to" select "Lambda Function" and find your new Lambda function
-  * Click Save
-  * Add a new object and verify other bucket(s)
 
 ***
 

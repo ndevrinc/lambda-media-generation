@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  lambda-media-generation
+
+  Lambda function for creating resized images in S3.
+
+Globals:
+  Function:
+    Timeout: 10
+
+Resources:
+  GenerateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: index.handler
+      Timeout: 600
+      Runtime: nodejs12.x
+      Role: arn:aws:iam::111111111111:role/lambda-s3-role
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /generate
+            Method: POST
