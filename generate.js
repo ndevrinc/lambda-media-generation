@@ -26,21 +26,17 @@ class Generate {
     async process(event) {
 
         let response;
-        let update_response;
         try {
             if (event.body !== null && event.body !== undefined) {
-                this.initVars(event);
+                if (this.initVars(event)) {
 
-                if (false !== this.mainSize) {
-                    console.log("is main: yes - " + this.mainSize);
-
-                    const response = await s3.getObject({
+                    const s3_response = await s3.getObject({
                         Bucket: this.bucket,
                         Key: this.key
                     }).promise();
 
-                    this.contentType = response.ContentType;
-                    this.responseBody = response.Body;
+                    this.contentType = s3_response.ContentType;
+                    this.responseBody = s3_response.Body;
 
                     await this.resizeImages();
 
@@ -48,114 +44,71 @@ class Generate {
                     const options = {
                         hostname: this.hostname,
                         port: 443,
-                        path: this.path + "?aid=" + this.aid + "&key=" + this.key + "&api_key=" + this.update_key,
+                        path: this.path + "?aid=" + this.aid + "&key=" + this.key + "&api_key=" + this.api_key,
                         method: 'GET'
                     };
-                    const req = await https.get(options, resp => {
-                        console.log(`statusCode: ${resp.statusCode}`);
-
-                        resp.on('data', chunk => {
-                            console.log(chunk);
-                        });
-
+                    await this.httpsRequest(options).then(function (body) {
+                        console.log(body);
                     });
-
-                    req.on("error", err => {
-                        console.log("Error: " + err.message);
-                    });
+                    response = {
+                        'statusCode': 200,
+                        'body': JSON.stringify({
+                            message: 'Media Resized.',
+                        })
+                    }
                 } else {
-                    console.log("is main: no");
-                    // Do nothing
-                    return;
+                    response = {
+                        'statusCode': 400,
+                        'body': JSON.stringify({
+                            message: 'Error, see logs',
+                        })
+                    }
                 }
+
             }
 
-            response = {
-                'statusCode': 200,
-                'body': JSON.stringify({
-                    message: 'Media Resized, Updated: ' + update_response,
-                })
-            }
         } catch (err) {
             console.log(err);
-            return err;
+            response = {
+                'statusCode': 400,
+                'body': JSON.stringify({
+                    message: 'Error, see logs',
+                })
+            }
         }
 
         return response;
 
     }
 
-    setMainSize() {
-        const imageObj = path.parse(this.key);
-        const imageName = imageObj['name'];
-        let sizeName = '';
-
-        for (let [sourceName, sizes] of Object.entries(this.sources)) {
-
-            // Simple check for non full images
-            if ("full" !== sourceName && imageName.endsWith(sourceName)) {
-                this.mainSize = sourceName;
-                return;
-            }
-
-            // The "full" image string is technically an empty size so it is a bit more complicated
-            if ("full" === sourceName) {
-                for (let size of sizes) {
-                    sizeName = this.getSizeName(size);
-
-                    // For "full" check each individual generated size
-                    if (imageName.endsWith(sizeName)) {
-                        this.mainSize = false;
-                        return;
-                    }
-                }
-                this.mainSize = "full";
-                return;
-            }
-
-        }
-
-        this.mainSize = false;
-    }
-
     initVars(event) {
         const config = require('./config.json');
-        this.bucket = "";
-        this.key = "";
-        this.aid = null;
-        this.sources = [];
-        this.sizes = [];
-        this.update_url = "";
-        this.update_key = "";
 
         let body = JSON.parse(event.body);
-        let api_key = body.api_key;
+        this.api_key = body.api_key;
         this.bucket = body.bucket;
-        this.aid = body.aid;
-        // Object key may have spaces or unicode non-ASCII characters.
-        this.key = body.key.replace(/\+/g, " ");
 
 
         if ("object" === typeof config.buckets) {
             try {
                 // Check API Key
-                if (api_key !== confi.buckets[this.bucket]['api_key']) {
+                if (this.api_key !== config.buckets[this.bucket]['api_key']) {
                     console.log("api_key did not match!");
-                    this.mainSize = false;
-                    return;
+                    return false;
                 }
 
-                this.sources = config.buckets[this.bucket]['sources'];
-                this.setMainSize();
-                this.sizes = config.buckets[this.bucket]['sources'][this.mainSize];
-                this.hostname = config.buckets[this.bucket]['hostname'];
-                this.path = config.buckets[this.bucket]['path'];
-                this.update_key = config.buckets[this.bucket]['update_key'];
+                this.aid = body.aid;
+                // Object key may have spaces or unicode non-ASCII characters.
+                this.key = body.key.replace(/\+/g, " ");
+                this.sizes = JSON.parse(body.sizes);
+                this.hostname = body.hostname;
+                this.path = body.path;
             } catch (err) {
                 console.log(err, err.stack);
-                console.log(config.buckets);
             }
         }
+
+        return true;
     }
 
     getSizeName(size) {
@@ -166,11 +119,11 @@ class Generate {
         let width = size[0];
         let height = size[1];
         let crop = size[2];
-        console.log("uploading - "+width+"x"+height+"-"+crop);
+        console.log("uploading - " + width + "x" + height + "-" + crop);
 
         const imageObj = path.parse(this.key);
         let sizeKey = imageObj["name"] + '-' + this.getSizeName(size) + imageObj["ext"];
-        if ( "dir" in imageObj ) {
+        if ("dir" in imageObj) {
             sizeKey = imageObj["dir"] + '/' + sizeKey;
         }
 
@@ -201,17 +154,17 @@ class Generate {
         if (crop || height === 9999) {
             fit = "inside";
         }
-        console.log("resizeImage - "+width+"x"+height+"-"+fit);
+        console.log("resizeImage - " + width + "x" + height + "-" + fit);
 
         // Transform the image buffer in memory.
         let data = await sharp(this.responseBody)
-            .resize({ width: width, height: height, fit: fit})
+            .resize({width: width, height: height, fit: fit})
             .toBuffer()
             .catch((err, data, info) => {
                 console.log(err, err.stack);
                 console.log(info);
             });
-            await this.uploadImage(data, size);
+        await this.uploadImage(data, size);
     }
 
     async resizeImages() {
@@ -219,15 +172,28 @@ class Generate {
 
         try {
 
-        const listOfPromises = this.sizes.map(this.resizeImage, this);
+            const listOfPromises = this.sizes.map(this.resizeImage, this);
 
-        await Promise.all(listOfPromises);
+            await Promise.all(listOfPromises);
 
         } catch (err) {
             console.log(err, err.stack);
         }
     }
 
+    httpsRequest(params) {
+        return new Promise(function (resolve, reject) {
+            const req = https.get(params, function (resp) {
+                console.log(`statusCode: ${resp.statusCode}`);
+
+                resp.on('end', function () {
+                    resolve("Update Complete");
+                })
+
+            });
+
+        })
+    }
 }
 
 // Exports
